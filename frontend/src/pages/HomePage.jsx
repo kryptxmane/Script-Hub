@@ -36,7 +36,7 @@ export default function HomePage() {
 
     useEffect(() => {
         let cancelled = false;
-        (async () => {
+        const loadAll = async (initial = false) => {
             try {
                 const [chRes, vidRes] = await Promise.all([
                     api.get("/channel").catch(() => ({ data: null })),
@@ -45,14 +45,27 @@ export default function HomePage() {
                 if (cancelled) return;
                 setChannel(chRes.data);
                 setVideos(vidRes.data || []);
+                setError(null);
             } catch (e) {
-                if (!cancelled) setError("Failed to load videos. Please try again later.");
+                if (!cancelled && initial) setError("Failed to load videos. Please try again later.");
             } finally {
-                if (!cancelled) setLoading(false);
+                if (!cancelled && initial) setLoading(false);
             }
-        })();
+        };
+
+        loadAll(true);
+
+        // Auto-refresh every 5 minutes (matches backend YouTube cache TTL)
+        const interval = setInterval(() => loadAll(false), 5 * 60 * 1000);
+
+        // Refresh immediately when the tab regains focus
+        const onFocus = () => loadAll(false);
+        window.addEventListener("focus", onFocus);
+
         return () => {
             cancelled = true;
+            clearInterval(interval);
+            window.removeEventListener("focus", onFocus);
         };
     }, []);
 
