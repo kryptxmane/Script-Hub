@@ -55,8 +55,22 @@ export default function HomePage() {
         };
     }, []);
 
+    // Parse ISO 8601 duration to seconds — used to filter out Shorts (<= 60s)
+    const parseDurationSeconds = (iso) => {
+        if (!iso) return 0;
+        const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        if (!m) return 0;
+        return (parseInt(m[1] || 0, 10) * 3600) + (parseInt(m[2] || 0, 10) * 60) + parseInt(m[3] || 0, 10);
+    };
+
+    // Exclude YouTube Shorts (<= 60s) from every view
+    const longFormVideos = useMemo(
+        () => videos.filter((v) => parseDurationSeconds(v.duration) > 60),
+        [videos]
+    );
+
     const filteredVideos = useMemo(() => {
-        let list = [...videos];
+        let list = [...longFormVideos];
         const q = search.trim().toLowerCase();
         if (q) {
             list = list.filter(
@@ -73,13 +87,26 @@ export default function HomePage() {
             list.sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
         }
         return list;
-    }, [videos, search, sort]);
+    }, [longFormVideos, search, sort]);
 
-    const trending = useMemo(() => {
-        return [...videos]
-            .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
-            .slice(0, 3);
-    }, [videos]);
+    // "Trending This Week" = last 7 days by views, fallback to last 30 days, hide if empty
+    const { trending, trendingLabel } = useMemo(() => {
+        const now = Date.now();
+        const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+        const monthAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+        const inRange = (since) =>
+            longFormVideos
+                .filter((v) => new Date(v.published_at).getTime() >= since)
+                .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+                .slice(0, 3);
+
+        const week = inRange(weekAgo);
+        if (week.length > 0) return { trending: week, trendingLabel: "Trending This Week" };
+        const month = inRange(monthAgo);
+        if (month.length > 0) return { trending: month, trendingLabel: "Trending This Month" };
+        return { trending: [], trendingLabel: "" };
+    }, [longFormVideos]);
 
     const handleScriptSaved = (video_id, url) => {
         setVideos((prev) =>
@@ -98,7 +125,7 @@ export default function HomePage() {
             />
 
             <main className="relative z-10">
-                <Hero channel={channel} videoCount={videos.length} />
+                <Hero channel={channel} videoCount={longFormVideos.length} />
 
                 <UGPhoneCollab />
 
@@ -107,7 +134,7 @@ export default function HomePage() {
                     <section className="py-6">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center gap-2 mb-5">
-                                <span className="pill">Trending This Week</span>
+                                <span className="pill">{trendingLabel}</span>
                             </div>
                             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                                 {trending.map((v, i) => (
