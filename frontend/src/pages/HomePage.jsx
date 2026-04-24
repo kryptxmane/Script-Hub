@@ -155,7 +155,7 @@ export default function HomePage() {
                 {/* All videos */}
                 <section className="py-10">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <SortBar sort={sort} setSort={setSort} count={filteredVideos.length} />
+                        <SortBar sort={sort} setSort={setSort} count={filteredVideos.length} search={search} setSearch={setSearch} />
 
                         {error && (
                             <div

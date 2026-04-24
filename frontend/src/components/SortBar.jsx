@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock, Flame, History, SortAsc } from "lucide-react";
+import { Clock, Flame, History, SortAsc, Search, X } from "lucide-react";
 
 const OPTIONS = [
     { key: "latest", label: "Latest", icon: Clock },
@@ -7,7 +7,7 @@ const OPTIONS = [
     { key: "popular", label: "Most Popular", icon: Flame },
 ];
 
-export default function SortBar({ sort, setSort, count }) {
+export default function SortBar({ sort, setSort, count, search, setSearch }) {
     return (
         <div className="mb-6">
             {/* Header row */}
@@ -21,7 +21,37 @@ export default function SortBar({ sort, setSort, count }) {
                 </div>
             </div>
 
-            {/* Sort pills — own row, scrollable on mobile */}
+            {/* Search input */}
+            <div className="relative mb-3" data-testid="videos-search-wrap">
+                <Search
+                    size={16}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                    style={{ color: "var(--text-soft)" }}
+                />
+                <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search Script..."
+                    className="vx-input pl-11 pr-11"
+                    data-testid="videos-search-input"
+                    aria-label="Search scripts"
+                />
+                {search && (
+                    <button
+                        type="button"
+                        onClick={() => setSearch("")}
+                        aria-label="Clear search"
+                        data-testid="videos-search-clear"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                        style={{ color: "var(--text-soft)" }}
+                    >
+                        <X size={14} />
+                    </button>
+                )}
+            </div>
+
+            {/* Sort pills */}
             <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
                 <div
                     className="inline-flex gap-1.5 p-1 glass rounded-full w-max"
