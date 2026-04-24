@@ -14,7 +14,6 @@ import ScriptModal from "../components/ScriptModal";
 import EditScriptModal from "../components/EditScriptModal";
 import DonateModal from "../components/DonateModal";
 import SettingsModal from "../components/SettingsModal";
-import AutoExtractButton from "../components/AutoExtractButton";
 import { SearchX } from "lucide-react";
 
 export default function HomePage() {
@@ -170,17 +169,6 @@ export default function HomePage() {
                 <section className="py-10">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <SortBar sort={sort} setSort={setSort} count={filteredVideos.length} search={search} setSearch={setSearch} />
-
-                        {isAdmin && (
-                            <div className="flex items-center justify-end mb-4 -mt-2">
-                                <AutoExtractButton
-                                    onDone={async () => {
-                                        const { data } = await api.get("/videos");
-                                        setVideos(data || []);
-                                    }}
-                                />
-                            </div>
-                        )}
 
                         {error && (
                             <div
