@@ -161,7 +161,7 @@ async def seed_admin():
 # -------------------- YouTube (cached) --------------------
 YT_BASE = "https://www.googleapis.com/youtube/v3"
 _cache = {"channel": None, "channel_ts": 0.0, "videos": None, "videos_ts": 0.0}
-CACHE_TTL = 300  # seconds
+CACHE_TTL = 60  # seconds — new uploads appear within ~1 min
 
 
 def _now() -> float:
