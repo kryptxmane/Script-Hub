@@ -338,6 +338,74 @@ async def delete_script(video_id: str, _: dict = Depends(require_admin)):
     return {"ok": True}
 
 
+# Extract first matching URL from description that contains the given keyword (case-insensitive)
+_URL_RE = __import__("re").compile(r"https?://[^\s)<>\]\"']+", __import__("re").IGNORECASE)
+
+
+def _find_url(description: str, keyword: str) -> Optional[str]:
+    """Find first URL in description containing `keyword`. Hyphens in URL are normalised
+    so 'linkunlock' matches both 'linkunlock.com' and 'link-unlock.com'."""
+    if not description:
+        return None
+    kw = keyword.lower().replace("-", "")
+    for url in _URL_RE.findall(description):
+        normalised = url.lower().replace("-", "")
+        if kw in normalised:
+            return url.rstrip(".,;:!?)")
+    return None
+
+
+class AutoExtractResult(BaseModel):
+    extracted: int
+    skipped_latest: Optional[str] = None
+    no_link_found: int
+    total_processed: int
+
+
+@api_router.post("/scripts/auto-extract", response_model=AutoExtractResult)
+async def auto_extract_scripts(_: dict = Depends(require_admin)):
+    """
+    Scan every video's YouTube description (except the latest) for a script link.
+    Priority: 'velink' URL, else 'linkunlock' URL.
+    Writes to db.scripts (overwrites existing entries so auto-extract is the source of truth).
+    """
+    videos = await fetch_all_videos()
+    # sort newest first, skip the latest one
+    ordered = sorted(videos, key=lambda v: v.get("published_at", ""), reverse=True)
+    if not ordered:
+        return AutoExtractResult(extracted=0, no_link_found=0, total_processed=0)
+    latest = ordered[0]
+    to_process = ordered[1:]
+
+    extracted = 0
+    missing = 0
+    now = datetime.now(timezone.utc).isoformat()
+    for v in to_process:
+        desc = v.get("description", "")
+        url = _find_url(desc, "velink") or _find_url(desc, "linkunlock")
+        if url:
+            await db.scripts.update_one(
+                {"video_id": v["video_id"]},
+                {"$set": {
+                    "video_id": v["video_id"],
+                    "script_url": url,
+                    "updated_at": now,
+                    "source": "auto",
+                }},
+                upsert=True,
+            )
+            extracted += 1
+        else:
+            missing += 1
+
+    return AutoExtractResult(
+        extracted=extracted,
+        skipped_latest=latest.get("video_id"),
+        no_link_found=missing,
+        total_processed=len(to_process),
+    )
+
+
 # -------------------- Mount --------------------
 app.include_router(api_router)
 
