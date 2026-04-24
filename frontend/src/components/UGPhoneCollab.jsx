@@ -4,7 +4,7 @@ import { Gamepad2, Zap, Globe2, ArrowRight } from "lucide-react";
 
 export default function UGPhoneCollab() {
     return (
-        <section className="py-14 md:py-20 relative">
+        <section className="py-10 md:py-14 relative">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div
                     className="glass-strong noise relative overflow-hidden rounded-3xl p-8 md:p-12"

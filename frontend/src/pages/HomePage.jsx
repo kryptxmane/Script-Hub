@@ -100,6 +100,8 @@ export default function HomePage() {
             <main className="relative z-10">
                 <Hero channel={channel} videoCount={videos.length} />
 
+                <UGPhoneCollab />
+
                 {/* Trending */}
                 {!loading && trending.length > 0 && (
                     <section className="py-6">
@@ -180,7 +182,6 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                <UGPhoneCollab />
             </main>
 
             <Footer />
