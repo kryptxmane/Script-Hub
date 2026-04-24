@@ -230,10 +230,14 @@ async def fetch_all_videos() -> List[dict]:
     for i in range(0, len(video_ids), 50):
         chunk = video_ids[i:i + 50]
         data = await _yt_get("videos", {
-            "part": "snippet,statistics,contentDetails",
+            "part": "snippet,statistics,contentDetails,status",
             "id": ",".join(chunk),
         })
         for it in data.get("items", []):
+            # Skip private videos — only public + unlisted are shown
+            privacy = (it.get("status") or {}).get("privacyStatus", "public")
+            if privacy == "private":
+                continue
             snip = it["snippet"]
             stats = it.get("statistics", {})
             thumbs = snip.get("thumbnails", {})
